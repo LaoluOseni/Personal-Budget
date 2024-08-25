@@ -1,0 +1,14 @@
+{
+  "name": "personal-budget",
+  "version": "1.0.0",
+  "description": "Personal Budget Project: Envelope Budgeting",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "author": "Laolu Oseni",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
