@@ -1,6 +1,6 @@
 Personal Budget Project
 
-A porject that helps implement envelope budgeting.
+A project that helps implement envelope budgeting.
 
 Create, Read, Update and Delete Envelopes. NOT IN ANYWAY COMPLETE. WORK IN PROGRESS!!
 
