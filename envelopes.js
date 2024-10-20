@@ -1,6 +1,9 @@
 const express = require("express");
-const envelopes = require("./data.js");
+//const envelopes = require("./data.js");
+const client = require('./db/database.js');
+
 const envelopeRouter = express.Router();
+
 
 
 //Param to select envelope by Id
@@ -15,8 +18,9 @@ envelopeRouter.param("id", (req, res, next, id) => {
 })
 
 //Get All Envelopes
-envelopeRouter.get("/", (req, res, next) => {
-    res.send(envelopes);
+envelopeRouter.get("/", async (req, res, next) => {
+    const envelopes = await client.query('SELECT * FROM envelopes');
+    res.send(envelopes.rows);
 });
 
 //Get Envelope By Id
