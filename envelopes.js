@@ -7,6 +7,7 @@ const envelopeRouter = express.Router();
 
 
 //Param to select envelope by Id
+/*
 envelopeRouter.param("id", (req, res, next, id) => {
     const numId = Number(id);
     const selectedEnvelope = envelopes.find((env) => {
@@ -16,6 +17,7 @@ envelopeRouter.param("id", (req, res, next, id) => {
     //console.log(selectedEnvelope);
     next();
 })
+*/
 
 //Get All Envelopes
 envelopeRouter.get("/", async (req, res, next) => {
@@ -24,8 +26,10 @@ envelopeRouter.get("/", async (req, res, next) => {
 });
 
 //Get Envelope By Id
-envelopeRouter.get("/:id", (req, res, next) => {
-    res.send(req.selectedEnvelope);
+envelopeRouter.get("/:id", async (req, res, next) => {
+    const id = req.params.id;
+    const envelope = await client.query(`SELECT * FROM envelopes WHERE id = ${id}`);
+    res.send(envelope.rows);
 })
 
 
@@ -39,17 +43,11 @@ envelopeRouter.post("/:id", (req, res, next) => {
 })
 
 //Create Envelope
-envelopeRouter.post("/", (req, res, next) => {
+envelopeRouter.post("/", async (req, res, next) => {
     const { title, budget } = req.body;
-    const newid = envelopes.length + 1;
-    const newEnvelope = {
-        id: newid,
-        title,
-        budget,
-    }
-    envelopes.push(newEnvelope);
-    console.log(envelopes);
-    res.send(newEnvelope);
+    await client.query(`INSERT INTO envelopes (title, budget) VALUES (${title}, ${budget})`);
+    const created = await client.query('SELECT * FROM envelopes');
+    res.send(created.rows);
 })
 
 //Delete Envelope
