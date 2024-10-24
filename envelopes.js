@@ -47,6 +47,51 @@ envelopeRouter.post("/:id", async (req, res, next) => {
     }
 });
 
-//Transactions
+//Create Envelope Transaction
+envelopeRouter.post("/:id/transactions", async (req, res) => {
+    const { id } = req.params;
+    const { title, amount } = req.body;
+    const date = new Date();
+
+    const envelopeQuery = "SELECT * FROM envelopes WHERE envelopes.id = $1";
+    const transactionQuery = "INSERT INTO transactions(title, amount, date, envelope_id) VALUES($1, $2, $3, $4) RETURNING *";
+    const updateEnvQuery = "UPDATE envelopes SET budget = budget - $1 WHERE id = $2 RETURNING *";
+
+    try {
+        //SQL transaction
+        const client = db.client;
+        await client.query('BEGIN');
+        const envelope = await client.query(envelopeQuery, [id]);
+
+        if (envelope.rowCount < 1) {
+            return res.status(404).send({
+                message: "No envelope information found"
+            });
+        };
+
+        const newTransaction = await client.query(transactionQuery, [title, amount, date, id]);
+        await client.query(updateEnvQuery, [amount, id]);
+        await client.query('COMMIT');
+
+        res.status(201).send({
+            status: 'Success',
+            message: 'New transaction created',
+            data: newTransaction.rows[0],
+        });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        return res.status(500).send({
+            error: err.message
+        });
+    }
+})
+
+
+
+//Get Envelope Transactions
+envelopeRouter.get("/:id/transactions", async (req, res) => {
+    const { id } = req.params;
+    const query = "SELECT * FROM transactions WHERE id = $1";
+});
 
 module.exports = envelopeRouter;
