@@ -1,5 +1,6 @@
+require('dotenv').config();
 const express = require("express");
-const client = require('./db/database.js');
+const db = require('./db/database.js');
 
 const envelopeRouter = require("./envelopes.js");
 
@@ -17,7 +18,5 @@ app.use('/envelopes', envelopeRouter);
 
 app.listen(PORT, async () => {
     console.log("Server is up and running");
-    await client.connect();
-    console.log('connected to db');
-    //console.log(process.env.PORT);
+    console.log(process.env.PGDATABASE);
 })

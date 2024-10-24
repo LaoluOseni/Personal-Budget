@@ -1,21 +1,15 @@
 const pg = require('pg');
-const { Pool, Client } = pg;
+const { Pool, Client} = pg;
 
-const client = new Client({
-    user: 'budget',
-    password: 'budget',
-    host: 'localhost',
-    port: 5432,
-    database: 'personal_budget'
-});
+const pool = new Pool();
 
-async function connect(params) {
-    await client.connect();
-    const res = await client.query('SELECT * FROM envelopes');
-    console.log(res.rows);
+const query = async (text, params, callback) => {
+    return pool.query(text, params, callback);
 }
 
 //connect();
-console.log('connected');
+//console.log('connected');
 
-module.exports = client;
+module.exports = {
+    query
+};

@@ -1,27 +1,12 @@
 const express = require("express");
-//const envelopes = require("./data.js");
-const client = require('./db/database.js');
+const db = require('./db/database.js');
 
 const envelopeRouter = express.Router();
 
 
-
-//Param to select envelope by Id
-/*
-envelopeRouter.param("id", (req, res, next, id) => {
-    const numId = Number(id);
-    const selectedEnvelope = envelopes.find((env) => {
-        return env.id === numId;
-    });
-    req.selectedEnvelope = selectedEnvelope;
-    //console.log(selectedEnvelope);
-    next();
-})
-*/
-
-//Get All Envelopes
+//Get All Envelopes. Working!
 envelopeRouter.get("/", async (req, res, next) => {
-    const envelopes = await client.query('SELECT * FROM envelopes');
+    const envelopes = await db.query('SELECT * FROM envelopes');
     res.send(envelopes.rows);
 });
 
@@ -30,32 +15,35 @@ envelopeRouter.get("/:id", async (req, res, next) => {
     const id = req.params.id;
     const envelope = await client.query(`SELECT * FROM envelopes WHERE id = ${id}`);
     res.send(envelope.rows);
-})
-
-
-//Update Envelope Budget remaining after spending
-envelopeRouter.post("/:id", (req, res, next) => {
-    const { cost } = req.body;
-    req.selectedEnvelope.budget = req.selectedEnvelope.budget - cost;
-    const updateIndex = envelopes.findIndex(env => env.id === req.selectedEnvelope.id);
-    envelopes[updateIndex] = req.selectedEnvelope;
-    res.send(envelopes[updateIndex]);
-})
+});
 
 //Create Envelope
 envelopeRouter.post("/", async (req, res, next) => {
     const { title, budget } = req.body;
-    await client.query(`INSERT INTO envelopes (title, budget) VALUES (${title}, ${budget})`);
+    //console.log(title);
+    client.query('INSERT INTO envelopes(title, budget) VALUES($1, $2)', [title, budget]);
     const created = await client.query('SELECT * FROM envelopes');
     res.send(created.rows);
 })
 
 //Delete Envelope
-envelopeRouter.delete("/:id", (req, res, next) => {
-    const updateIndex = envelopes.findIndex(env => env.id === req.selectedEnvelope.id);
-    envelopes.splice(updateIndex, 1);
-    res.send(envelopes);
+envelopeRouter.delete("/:id", async (req, res, next) => {
+    client.query('DELETE FROM envelopes WHERE id = $1', [req.params.id]);
+    const created = await client.query('SELECT * FROM envelopes');
+    res.send(created.rows);
 })
+
+
+//Update Envelope Budget remaining after spending
+envelopeRouter.post("/:id", async (req, res, next) => {
+    const { cost } = req.body;
+    const reqEnvelope = (await client.query(`SELECT * FROM envelopes WHERE id = ${req.params.id}`)).rows;
+    if (reqEnvelope[0].budget >= cost) {
+        reqEnvelope[0].budget -= cost;
+        res.send(reqEnvelope[0]);
+    }
+})
+
 
 
 //Transfer routes
