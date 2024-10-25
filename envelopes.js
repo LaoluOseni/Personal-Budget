@@ -92,6 +92,24 @@ envelopeRouter.post("/:id/transactions", async (req, res) => {
 envelopeRouter.get("/:id/transactions", async (req, res) => {
     const { id } = req.params;
     const query = "SELECT * FROM transactions WHERE id = $1";
+
+    try {
+        const transactions = await client.query(query, [id]);
+        if (transactions.rows < 1) {
+            return res.status(404).send({
+                message: "No envelope information found",
+            });
+        }
+        res.status(200).send({
+            status: 'Success',
+            message: 'Transactions information retrieved',
+            data: transactions.rows,
+        })
+    } catch (err) {
+        res.status(500).send({
+            error: err.message
+        });    
+    };
 });
 
 module.exports = envelopeRouter;
