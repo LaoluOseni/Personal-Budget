@@ -7,7 +7,9 @@ const query = async (text, params, callback) => {
     return pool.query(text, params, callback);
 }
 
-const client = await pool.connect();
+const client = async () => {
+    return await pool.connect();
+};
 //connect();
 //console.log('connected');
 
