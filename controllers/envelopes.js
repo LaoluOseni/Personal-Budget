@@ -71,7 +71,7 @@ const createEnvelope = async (req, res) => {
 const updateEnvelope = async (req, res) => {
     const { name, budget } = req.body;
     const { id } = req.params;
-    const query = "UPDATE envelopes SET name = $1, budget = $2 WHERE id = $3";
+    const query = "UPDATE envelopes SET name = $1, budget = $2 WHERE id = $3 RETURNING *";
 
     try {
         const updatedEnvelope = await db.query(query, [name, budget, id]);
@@ -85,9 +85,70 @@ const updateEnvelope = async (req, res) => {
 };
 
 //Delete an envelope
+const deleteEnvelope = async (req, res) => {
+    const { id } = req.params;
+    const envelopesQuery = "SELECT * FROM envelopes WHERE id =$1";
+    const deleteEnvQuery = "DELETE FROM envelopes WHERE id = $1";
+
+    try {
+        const record = await db.query(envelopesQuery, [id]);
+        if (record.rowCount < 1) {
+            return res.status(404).send({
+                message: "Record not found"
+            })
+        };
+
+        await db.query(deleteEnvQuery, [id]);
+        res.sendStatus(204);
+
+    } catch (err) {
+        return res.status(500).send({
+            error: err.message
+        });
+    }
+};
+
+const addEnvelopeTransaction = async (req, res) => {
+    const { id } = req.params;
+    const { name, amount } = req.body;
+    const date = new Date();
+
+    const envelopeQuery = "SELECT * FROM envelopes WHERE envelopes.id = $1";
+    const transactionQuery = "INSERT INTO transactions(title, amount, time, envelope_id) VALUES($1, $2, $3, $4) RETURNING *";
+    const updateEnvQuery = "UPDATE envelopes SET budget = budget - $1 WHERE id = $2 RETURNING *";
+
+    //SQL transaction
+    const client = await db.client();
+    try {
+        await client.query('BEGIN');
+        const envelope = await client.query(envelopeQuery, [id])
+        if (envelope.rowCount < 1) {
+            return res.status(404).send({
+                message: "no envelope information found",
+            });
+        };
+        const newTransaction = await client.query(transactionQuery, [name, amount, date, id]);
+        await client.query(updateEnvQuery, [amount, id]);
+        await client.query('COMMIT')
+
+        res.status(201).send({
+            status: 'Success',
+            message: 'New Transaction Created',
+            data: newTransaction.rows[0],
+        })
+    } catch (err) {
+        await client.query('ROLLBACK');
+        return res.status(500).send({
+            error: err.message
+        });
+    }
+};
 
 module.exports = {
     getEnvelopes,
     getEnvelopeById,
-    createEnvelope
+    createEnvelope,
+    updateEnvelope,
+    deleteEnvelope,
+    addEnvelopeTransaction
 };
