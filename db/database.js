@@ -1,3 +1,4 @@
+//require("dotenv").config();
 const pg = require('pg');
 const { Pool, Client} = pg;
 
@@ -10,7 +11,8 @@ const query = async (text, params, callback) => {
 const client = async () => {
     return await pool.connect();
 };
-//connect();
+
+
 //console.log('connected');
 
 module.exports = {
